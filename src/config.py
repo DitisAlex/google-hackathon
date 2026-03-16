@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from typing import List
 
@@ -21,7 +23,8 @@ class Settings(BaseSettings):
     github_retry_attempts: int = 3
     github_token: str | None = None
 
-    gemini_primary_model: str = "gemini-3"
+    google_api_key: str | None = None
+    gemini_primary_model: str = "gemini-2.0-flash"
     gemini_fallback_model: str = "gemini-2.0-flash"
 
     gcp_project_id: str | None = None

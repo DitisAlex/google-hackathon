@@ -1,29 +1,32 @@
-from typing import Any, Dict
+from google.adk.agents import LlmAgent
+
+WRITER_PROMPT = """
+You are a technical writer producing a professional README.md.
+
+You will receive a JSON research report from the previous agent in the session state key "research_output".
+
+Transform it into a well-structured Markdown document with these sections:
+# <Project Name>
+## Overview
+## Tech Stack  (table: Component | Version/Status)
+## Architecture
+## Entry Points
+## Directory Structure
+## Getting Started  (inferred setup steps)
+## Notes
+
+Rules:
+- Use standard GitHub Markdown.
+- Do NOT invent information not present in the research report.
+- If a section has no data, omit it.
+- Output ONLY the Markdown — no preamble.
+"""
 
 
-def build_markdown(research: Dict[str, Any]) -> str:
-    stack = research.get("tech_stack", [])
-    entry_points = research.get("entry_points", [])
-    summary = research.get("directory_summary", {})
-
-    table_rows = "\n".join(f"| {item} | detected |" for item in stack)
-    if not table_rows:
-        table_rows = "| Unknown | detected |"
-
-    tree_lines = "\n".join(f"- {name}: {count} files" for name, count in summary.items()) or "- No files found"
-    entries = "\n".join(f"- {item}" for item in entry_points) or "- None identified"
-
-    return (
-        "# Generated Repository Documentation\n\n"
-        f"Source: {research.get('repo_url', 'unknown')}\n\n"
-        "## Tech Stack\n\n"
-        "| Component | Status |\n"
-        "| --- | --- |\n"
-        f"{table_rows}\n\n"
-        "## Entry Points\n\n"
-        f"{entries}\n\n"
-        "## Directory Summary\n\n"
-        f"{tree_lines}\n\n"
-        "## Notes\n\n"
-        f"{research.get('project_purpose_guess', '')}\n"
+def create_writer_agent(model: str = "gemini-2.0-flash") -> LlmAgent:
+    return LlmAgent(
+        name="technical_writer",
+        model=model,
+        instruction=WRITER_PROMPT,
+        output_key="readme_markdown",
     )

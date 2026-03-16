@@ -5,6 +5,7 @@ import uuid
 from google.adk.agents import SequentialAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.types import Content, Part
 
 from src.adk.agents.researcher import create_researcher_agent
 from src.adk.agents.technical_writer import create_writer_agent
@@ -13,18 +14,18 @@ from src.models.schemas import GenerateOptions, JobResult
 
 
 class DocumentationOrchestrator:
-    def __init__(self, github_tool: GithubTool, timeout_seconds: int) -> None:
+    def __init__(self, github_tool: GithubTool, timeout_seconds: int, model: str = "gemini-2.0-flash") -> None:
         self._github_tool = github_tool
         self._timeout_seconds = timeout_seconds
+        self._model = model
 
     async def run(self, github_url: str, options: GenerateOptions) -> tuple[dict, JobResult]:
         tools = create_github_tools(self._github_tool)
-        model = options.model if hasattr(options, "model") else "gemini-2.0-flash"
         pipeline = SequentialAgent(
             name="readme_pipeline",
             sub_agents=[
-                create_researcher_agent(tools, model=model),
-                create_writer_agent(),
+                create_researcher_agent(tools, model=self._model),
+                create_writer_agent(model=self._model),
             ],
         )
 
@@ -39,7 +40,6 @@ class DocumentationOrchestrator:
         runner = Runner(agent=pipeline, app_name="readme_generator", session_service=session_service)
 
         async def _run():
-            from google.adk.types import Content, Part
             initial_message = Content(parts=[Part(text=github_url)], role="user")
             async for _ in runner.run_async(
                 user_id="system",

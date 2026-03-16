@@ -47,6 +47,7 @@ app.state.github_tool = GithubTool(
 app.state.orchestrator = DocumentationOrchestrator(
     github_tool=app.state.github_tool,
     timeout_seconds=settings.max_job_timeout_seconds,
+    model=settings.gemini_primary_model,
 )
 
 
@@ -69,7 +70,7 @@ app.state.run_generation = run_generation
 
 
 @app.middleware("http")
-async def enforce_body_size_limit(request: Request, call_next):
+async def enforce_body_size_limit(request: Request, call_next) -> JSONResponse:
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > settings.max_request_body_bytes:
         raise ApiError(

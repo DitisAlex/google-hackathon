@@ -40,7 +40,7 @@ class GithubTool:
         ref = self.parse_repo_url(repo_url)
         headers = self._headers()
         url = f"https://api.github.com/repos/{ref.owner}/{ref.repo}"
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
+        async with httpx.AsyncClient(timeout=self._timeout, follow_redirects=True) as client:
             response = await client.get(url, headers=headers)
             if response.status_code == 200:
                 is_private = bool(response.json().get("private", False))
@@ -104,7 +104,7 @@ class GithubTool:
     async def _request_json(self, url: str) -> Dict[str, Any]:
         headers = self._headers()
         for attempt in range(self._retry_attempts):
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
+            async with httpx.AsyncClient(timeout=self._timeout, follow_redirects=True) as client:
                 response = await client.get(url, headers=headers)
             if response.status_code == 200:
                 return response.json()
@@ -122,3 +122,18 @@ class GithubTool:
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
+
+
+from google.adk.tools import FunctionTool
+
+
+def create_github_tools(github_tool: GithubTool) -> list:
+    async def fetch_tree(repo_url: str, branch: str = None, max_depth: int = 5):
+        """Fetch the file tree of a GitHub repository. Returns a list of {path, type, size} dicts."""
+        return await github_tool.fetch_tree(repo_url, branch, max_depth)
+
+    async def read_file(repo_url: str, file_path: str, branch: str = None):
+        """Read the text content of a single file in a GitHub repository. Returns None if too large or binary."""
+        return await github_tool.read_file(repo_url, file_path, branch)
+
+    return [FunctionTool(fetch_tree), FunctionTool(read_file)]

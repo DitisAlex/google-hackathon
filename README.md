@@ -1,20 +1,20 @@
-# ADK-Powered GitHub Repository Documentation Generator
+# Internal-Agent Backend For README Generation
 
-Python + FastAPI backend boilerplate for Track 2 constraints:
+Python + FastAPI backend that accepts generation requests, invokes an internal
+agent function inside the repository, and exposes a polling API for frontend
+clients.
 
 - Vertex AI Agent Engine compatible orchestration pattern
 - Cloud Run-first deployment
 - Cloud Trace hooks (OpenTelemetry-ready)
 - ADC-based authentication flow
-- ADK-style two-agent pipeline (Researcher -> Technical Writer)
-- Gemini model fallback policy (Gemini 3 preferred, fallback to Gemini 2.0 Flash)
+- Internal agent invocation via orchestration layer
 
 ## Stack
 
 - Python 3.11+
 - FastAPI + Uvicorn
 - Pydantic v2
-- httpx for GitHub API access
 - slowapi for rate limiting
 - structlog for JSON logging
 - OpenTelemetry dependencies for Cloud Trace
@@ -25,8 +25,8 @@ Python + FastAPI backend boilerplate for Track 2 constraints:
 - GET /api/v1/generate/{job_id}
 - GET /api/v1/health
 - In-memory job store with local snapshot persistence (.jobs_snapshot.json)
-- GitHub repo validation and repository tree retrieval
-- Sequential two-stage orchestration (Researcher then Technical Writer)
+- Async job queue + polling status endpoint
+- Internal agent orchestration (no external agent endpoint)
 - 120-second job timeout support
 
 ## Quickstart
@@ -68,6 +68,32 @@ Poll job status:
 
 curl http://localhost:8000/api/v1/generate/<job_id>
 
+## Internal Agent Contract (Current Assumption)
+
+The orchestrator invokes an internal function with:
+
+```json
+{
+	"github_url": "https://github.com/owner/repo",
+	"options": {
+		"branch": null,
+		"max_depth": 5,
+		"include_tests": false,
+		"output_format": "markdown"
+	}
+}
+```
+
+Expected internal function success response:
+
+```json
+{
+	"readme.md": "# Generated README ..."
+}
+```
+
+Only `readme.md` content is persisted as the job result markdown.
+
 ## Test and Lint
 
 - Run tests: pytest -v
@@ -107,4 +133,4 @@ docker run --rm -p 8000:8000 --env-file .env repo-doc-generator:latest
 - This is polling-only in v1 (SSE intentionally deferred).
 - GKE is not configured in this boilerplate (Cloud Run primary).
 - Local disk snapshots are best-effort and ephemeral on Cloud Run instances.
-- Private repositories are out of scope in v1.
+- URL format is validated; repository accessibility is handled by internal agent logic.

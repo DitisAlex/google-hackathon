@@ -1,3 +1,11 @@
+"""Application configuration models and loader.
+
+Data flow:
+    Environment variables are parsed into :class:`Settings`. The FastAPI app
+    calls :func:`get_settings` once at startup and reuses the cached instance
+    to configure logging, tracing, middleware limits, and orchestrator timeout.
+"""
+
 from functools import lru_cache
 from typing import List
 
@@ -6,6 +14,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Typed runtime configuration for the service.
+
+    Attributes mirror environment variables and safe defaults so the app can
+    start locally without additional setup.
+    """
+
     app_name: str = "repo-doc-generator"
     app_env: str = "development"
     app_host: str = "0.0.0.0"
@@ -16,10 +30,6 @@ class Settings(BaseSettings):
     max_job_timeout_seconds: int = 120
     max_request_body_bytes: int = 10_240
     max_file_size_bytes: int = 102_400
-
-    github_api_timeout_seconds: int = 10
-    github_retry_attempts: int = 3
-    github_token: str | None = None
 
     gemini_primary_model: str = "gemini-3"
     gemini_fallback_model: str = "gemini-2.0-flash"
@@ -34,6 +44,14 @@ class Settings(BaseSettings):
     @field_validator("cors_allow_origins", mode="before")
     @classmethod
     def parse_origins(cls, value: str | List[str]) -> List[str]:
+        """Normalize CORS origins from either CSV string or list input.
+
+        Args:
+            value: Raw setting value from environment or already-parsed list.
+
+        Returns:
+            A cleaned list of origin strings, defaulting to ``["*"]``.
+        """
         if isinstance(value, list):
             return value
         if not value:
@@ -43,4 +61,13 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Return a cached settings object.
+
+    Returns:
+        Singleton-like :class:`Settings` instance for process lifetime.
+
+    Data flow:
+        First call parses environment and `.env`; subsequent calls reuse the
+        same object to keep configuration consistent across modules.
+    """
     return Settings()

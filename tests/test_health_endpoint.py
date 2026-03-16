@@ -1,7 +1,10 @@
+"""Tests for the health-check endpoint."""
+
 from tests.conftest import get_client
 
 
 def test_health_endpoint() -> None:
+    """Verify health endpoint returns expected liveness payload."""
     client = get_client()
     response = client.get("/api/v1/health")
 

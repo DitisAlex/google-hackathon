@@ -1,3 +1,14 @@
+"""FastAPI application bootstrap and runtime wiring.
+
+Data flow:
+     1. Settings are loaded and used to configure logging/tracing/middleware.
+    2. Shared app-state services (job store, orchestrator) are
+         initialized once at startup.
+     3. ``POST /generate`` enqueues background work via ``run_generation``.
+    4. Background processing delegates README generation to an internal agent.
+     5. ``GET /generate/{job_id}`` returns persisted status/result data.
+"""
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -7,7 +18,6 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from src.adk.orchestrator import DocumentationOrchestrator
-from src.adk.tools.github_tool import GithubTool
 from src.api.errors import ApiError
 from src.api.routes.generate import router as generate_router
 from src.api.routes.health import router as health_router
@@ -38,23 +48,27 @@ app.add_middleware(
 )
 
 app.state.job_store = JobStore()
-app.state.github_tool = GithubTool(
-    token=settings.github_token,
-    timeout_seconds=settings.github_api_timeout_seconds,
-    retry_attempts=settings.github_retry_attempts,
-    max_file_size_bytes=settings.max_file_size_bytes,
-)
 app.state.orchestrator = DocumentationOrchestrator(
-    github_tool=app.state.github_tool,
     timeout_seconds=settings.max_job_timeout_seconds,
 )
 
 
 async def run_generation(job_id: str, github_url: str, options: GenerateOptions) -> None:
+    """Execute the full generation pipeline for a submitted job.
+
+    Args:
+        job_id: Existing job identifier in ``JobStore``.
+        github_url: Target repository URL.
+        options: Generation options supplied by the request.
+
+    Data flow:
+        Marks the job as processing, requests README generation from the
+        internal agent via
+        the orchestrator, and persists final success/failure state.
+    """
     try:
         app.state.job_store.set_processing(job_id)
-        research, result = await app.state.orchestrator.run(github_url, options)
-        app.state.job_store.set_researcher_output(job_id, research)
+        result = await app.state.orchestrator.run(github_url, options)
         app.state.job_store.set_completed(job_id, result)
         logger.info("job_completed", job_id=job_id)
     except TimeoutError:
@@ -70,6 +84,18 @@ app.state.run_generation = run_generation
 
 @app.middleware("http")
 async def enforce_body_size_limit(request: Request, call_next):
+    """Reject oversized request bodies before route handlers execute.
+
+    Args:
+        request: Incoming HTTP request.
+        call_next: FastAPI middleware continuation callable.
+
+    Returns:
+        The downstream response when size checks pass.
+
+    Raises:
+        ApiError: If ``Content-Length`` exceeds configured limit.
+    """
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > settings.max_request_body_bytes:
         raise ApiError(
@@ -83,6 +109,15 @@ async def enforce_body_size_limit(request: Request, call_next):
 
 @app.exception_handler(ApiError)
 async def api_error_handler(_: Request, exc: ApiError):
+    """Render project-standard JSON response for :class:`ApiError`.
+
+    Args:
+        _: Unused request object required by FastAPI signature.
+        exc: Raised application error.
+
+    Returns:
+        JSON response with status code and ``{"error": ...}`` payload.
+    """
     return JSONResponse(status_code=exc.status_code, content=exc.detail)
 
 

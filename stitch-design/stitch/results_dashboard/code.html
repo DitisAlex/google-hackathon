@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind = { config: {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }}
+    </script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<title>Results Dashboard - Markdown View</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<div class="flex items-center gap-2">
+<h2 class="text-slate-900 dark:text-slate-100 font-bold text-lg tracking-tight">Repository Analysis</h2>
+</div>
+<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">Public</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+<button class="ml-2 flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+<span>Copy Markdown</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="flex flex-col md:flex-row gap-10">
+<!-- Sidebar Navigation -->
+<aside class="w-full md:w-64 flex-shrink-0 hidden md:block">
+<nav class="sticky top-28 space-y-1">
+<div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3 mb-4">Documentation</div>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" href="#overview">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#features">
+<span class="material-symbols-outlined text-[20px]">star</span>
+<span>Key Features</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#tech-stack">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+<span>Tech Stack</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#structure">
+<span class="material-symbols-outlined text-[20px]">account_tree</span>
+<span>Project Structure</span>
+</a>
+<div class="pt-6">
+<div class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3 mb-4">Support</div>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Document Content -->
+<div class="flex-1 max-w-3xl">
+<div class="mb-8">
+<h1 class="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mb-2">Results Dashboard</h1>
+<p class="text-lg text-slate-500 dark:text-slate-400 leading-relaxed">A markdown-inspired automated analysis of your project architecture and performance metrics.</p>
+</div>
+<hr class="border-slate-200 dark:border-slate-800 my-8"/>
+<!-- Section: Overview -->
+<section class="mb-12" id="overview">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+<span class="text-primary/40">#</span> Overview
+                    </h2>
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 prose dark:prose-invert max-w-none">
+<p class="text-slate-600 dark:text-slate-400 leading-7">
+                            This repository represents a modern full-stack implementation focused on high performance and modularity. The automated scan indicates a healthy codebase with <span class="text-primary font-semibold">98% test coverage</span> and optimized build sizes. The primary goal is to provide a seamless developer experience with built-in CI/CD pipelines.
+                        </p>
+<div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-background-light dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50">
+<div class="text-xs font-bold text-slate-400 uppercase mb-1">Status</div>
+<div class="text-emerald-500 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span> Stable
+                                </div>
+</div>
+<div class="bg-background-light dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50">
+<div class="text-xs font-bold text-slate-400 uppercase mb-1">Version</div>
+<div class="text-slate-900 dark:text-slate-100 font-bold">v2.4.0-rc</div>
+</div>
+<div class="bg-background-light dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700/50">
+<div class="text-xs font-bold text-slate-400 uppercase mb-1">License</div>
+<div class="text-slate-900 dark:text-slate-100 font-bold">MIT</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Key Features -->
+<section class="mb-12" id="features">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+<span class="text-primary/40">#</span> Key Features
+                    </h2>
+<ul class="space-y-3">
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400">
+<span class="text-primary mt-1 material-symbols-outlined text-sm">radio_button_checked</span>
+<span><strong>Real-time Synchronization:</strong> Advanced WebSockets layer ensuring sub-50ms latency for all client-server interactions.</span>
+</li>
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400">
+<span class="text-primary mt-1 material-symbols-outlined text-sm">radio_button_checked</span>
+<span><strong>Type Safety:</strong> 100% TypeScript implementation with strict-mode enabled across all modules.</span>
+</li>
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400">
+<span class="text-primary mt-1 material-symbols-outlined text-sm">radio_button_checked</span>
+<span><strong>Atomic Design:</strong> Component library follows atomic principles for maximum reusability.</span>
+</li>
+</ul>
+</section>
+<!-- Section: Tech Stack -->
+<section class="mb-12" id="tech-stack">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+<span class="text-primary/40">#</span> Tech Stack
+                    </h2>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<div class="flex flex-col items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary/50 transition-colors">
+<div class="w-10 h-10 mb-2 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">javascript</span>
+</div>
+<span class="text-sm font-semibold">React 18</span>
+</div>
+<div class="flex flex-col items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary/50 transition-colors">
+<div class="w-10 h-10 mb-2 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">css</span>
+</div>
+<span class="text-sm font-semibold">Tailwind CSS</span>
+</div>
+<div class="flex flex-col items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary/50 transition-colors">
+<div class="w-10 h-10 mb-2 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">storage</span>
+</div>
+<span class="text-sm font-semibold">PostgreSQL</span>
+</div>
+<div class="flex flex-col items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary/50 transition-colors">
+<div class="w-10 h-10 mb-2 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">cloud</span>
+</div>
+<span class="text-sm font-semibold">Vercel Edge</span>
+</div>
+</div>
+</section>
+<!-- Section: Project Structure -->
+<section class="mb-12" id="structure">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+<span class="text-primary/40">#</span> Project Structure
+                    </h2>
+<div class="bg-slate-900 rounded-xl p-6 font-mono text-sm overflow-x-auto text-slate-300">
+<pre><span class="text-slate-500">.</span>
+<span class="text-slate-500">├──</span> <span class="text-primary">src/</span>
+<span class="text-slate-500">│   ├──</span> <span class="text-primary">components/</span> <span class="text-slate-500"># UI Library</span>
+<span class="text-slate-500">│   ├──</span> <span class="text-primary">hooks/</span>      <span class="text-slate-500"># React Hooks</span>
+<span class="text-slate-500">│   ├──</span> <span class="text-primary">lib/</span>        <span class="text-slate-500"># Utils &amp; Services</span>
+<span class="text-slate-500">│   └──</span> <span class="text-primary">store/</span>      <span class="text-slate-500"># State Management</span>
+<span class="text-slate-500">├──</span> <span class="text-primary">public/</span>
+<span class="text-slate-500">├──</span> <span class="text-amber-500">package.json</span>
+<span class="text-slate-500">└──</span> <span class="text-amber-500">README.md</span>
+</pre>
+</div>
+</section>
+<footer class="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-slate-400 text-sm">Generated on October 24, 2023 • 12:45 PM</p>
+</footer>
+</div>
+</div>
+</main>
+</div>
+</body></html>

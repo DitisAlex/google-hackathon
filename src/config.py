@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     github_retry_attempts: int = 3
     github_token: str | None = None
 
-    gemini_primary_model: str = "gemini-3"
+    gemini_primary_model: str = "gemini-2.5-pro"
     gemini_fallback_model: str = "gemini-2.0-flash"
 
     gcp_project_id: str | None = None

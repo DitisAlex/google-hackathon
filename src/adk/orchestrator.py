@@ -5,7 +5,7 @@ import uuid
 from google.adk.agents import SequentialAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-from google.adk.types import Content, Part
+from google.genai.types import Content, Part
 
 from src.adk.agents.researcher import create_researcher_agent
 from src.adk.agents.technical_writer import create_writer_agent
@@ -68,6 +68,6 @@ class DocumentationOrchestrator:
                 "tech_stack": research.get("tech_stack", []),
                 "file_count": len(research.get("directory_summary", {})),
             },
-            json=research if options.output_format.value == "json" else None,
+            json_output=research if options.output_format.value == "json" else None,
         )
         return research, result

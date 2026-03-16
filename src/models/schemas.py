@@ -32,7 +32,7 @@ class JobStatus(str, Enum):
 class JobResult(BaseModel):
     markdown: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    json: Optional[Dict[str, Any]] = None
+    json_output: Optional[Dict[str, Any]] = None
 
 
 class ErrorBody(BaseModel):

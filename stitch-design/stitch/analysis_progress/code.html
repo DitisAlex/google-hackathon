@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>RepoInsight - Analysis</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 md:px-10 py-4 bg-white dark:bg-slate-900/50 backdrop-blur-md">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary text-2xl">account_tree</span>
+</div>
+<h1 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight">RepoInsight</h1>
+</div>
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<!-- Main Content: Centered Loading State -->
+<main class="flex flex-1 flex-col items-center justify-center p-6">
+<div class="w-full max-w-[520px] bg-white dark:bg-slate-900 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8 md:p-12">
+<!-- Status Header -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center p-4 rounded-full bg-primary/5 mb-6">
+<span class="material-symbols-outlined text-primary text-4xl animate-pulse">database</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-2xl md:text-3xl font-bold tracking-tight mb-3">Analyzing repository structure...</h2>
+<p class="text-slate-500 dark:text-slate-400 text-base">This usually takes less than a minute depending on the size of your repository.</p>
+</div>
+<!-- Main Progress Bar -->
+<div class="space-y-3 mb-12">
+<div class="flex justify-between items-end">
+<span class="text-primary font-semibold text-sm uppercase tracking-wider">Processing Data</span>
+<span class="text-slate-900 dark:text-white font-bold text-lg leading-none">65%</span>
+</div>
+<div class="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 65%;"></div>
+</div>
+<p class="text-slate-400 dark:text-slate-500 text-sm italic">Crunching the numbers, almost there...</p>
+</div>
+<!-- Stepper Progress List -->
+<div class="space-y-6">
+<!-- Step 1: Completed -->
+<div class="flex items-start gap-4 group">
+<div class="flex flex-col items-center">
+<div class="flex size-7 items-center justify-center rounded-full bg-green-500 text-white shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<div class="w-[2px] h-8 bg-green-500 mt-2"></div>
+</div>
+<div class="pt-0.5">
+<p class="text-slate-900 dark:text-white font-semibold text-base">Fetching files</p>
+<p class="text-green-600 dark:text-green-400 text-sm font-medium">Completed</p>
+</div>
+</div>
+<!-- Step 2: In Progress -->
+<div class="flex items-start gap-4 group">
+<div class="flex flex-col items-center">
+<div class="flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/30 ring-4 ring-primary/10">
+<span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+</div>
+<div class="w-[2px] h-8 bg-slate-200 dark:bg-slate-800 mt-2"></div>
+</div>
+<div class="pt-0.5">
+<p class="text-slate-900 dark:text-white font-semibold text-base">Analyzing structure</p>
+<p class="text-primary text-sm font-medium">In progress...</p>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="flex items-start gap-4 group">
+<div class="flex flex-col items-center">
+<div class="flex size-7 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-300 dark:text-slate-600">
+<span class="material-symbols-outlined text-[18px]">circle</span>
+</div>
+</div>
+<div class="pt-0.5">
+<p class="text-slate-400 dark:text-slate-500 font-medium text-base">Generating summary</p>
+<p class="text-slate-300 dark:text-slate-600 text-sm uppercase tracking-tight">Pending</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="mt-8 flex items-center gap-2 text-slate-400 dark:text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">lock</span>
+<span>Your repository data is encrypted and remains private.</span>
+</div>
+</main>
+</div>
+<!-- Decorative background elements -->
+<div class="fixed top-0 right-0 -z-10 h-screen w-screen opacity-50 pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]"></div>
+</div>
+</body></html>

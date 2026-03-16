@@ -45,3 +45,13 @@ def get_logger(name: str):
         A configured structlog logger instance.
     """
     return structlog.get_logger(name)
+
+
+def bind_log_context(**values) -> None:
+    """Bind key/value pairs to structlog context for subsequent log events."""
+    structlog.contextvars.bind_contextvars(**values)
+
+
+def clear_log_context() -> None:
+    """Clear any bound structlog contextvars for the current execution context."""
+    structlog.contextvars.clear_contextvars()

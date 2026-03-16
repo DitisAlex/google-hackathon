@@ -1,7 +1,7 @@
 # Full Data Workflow
 
 ## Overview
-This service is a polling-based FastAPI backend that accepts repository-documentation jobs from a frontend, delegates README generation to an internal agent function in this repository, stores job state/results, and serves status updates back to clients.
+This service is a polling-based FastAPI backend that accepts repository-documentation jobs from a frontend, delegates README generation to the in-repo writer agent (`get_writer_agent()`), stores job state/results, and serves status updates back to clients.
 
 ## Components
 - API entrypoint: `src/main.py`
@@ -46,7 +46,7 @@ Flow:
 Flow:
 1. `JobStore.set_processing(job_id)` transitions state to `processing`.
 2. `DocumentationOrchestrator.run(...)` is called.
-3. Orchestrator invokes an internal dummy function (`_invoke_agent(...)`) under `asyncio.wait_for(...)` timeout.
+3. Orchestrator invokes `get_writer_agent()` from `src/adk/agents/skills/writer_agent.py` under `asyncio.wait_for(...)` timeout.
 4. Function input is:
 ```json
 {
@@ -59,7 +59,7 @@ Flow:
   }
 }
 ```
-5. Internal function success response is expected to include:
+5. Agent output is normalized into a JSON payload expected to include:
 ```json
 {
   "readme.md": "# Generated README ..."

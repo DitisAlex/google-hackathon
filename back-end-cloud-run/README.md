@@ -1,14 +1,14 @@
 # Internal-Agent Backend For README Generation
 
-Python + FastAPI backend that accepts generation requests, invokes an internal
-agent function inside the repository, and exposes a polling API for frontend
+Python + FastAPI backend that accepts generation requests, invokes the in-repo
+writer agent via `get_writer_agent()`, and exposes a polling API for frontend
 clients.
 
 - Vertex AI Agent Engine compatible orchestration pattern
 - Cloud Run-first deployment
 - Cloud Trace hooks (OpenTelemetry-ready)
 - ADC-based authentication flow
-- Internal agent invocation via orchestration layer
+- Internal writer-agent invocation via orchestration layer
 
 ## Stack
 
@@ -26,7 +26,7 @@ clients.
 - GET /api/v1/health
 - In-memory job store with local snapshot persistence (.jobs_snapshot.json)
 - Async job queue + polling status endpoint
-- Internal agent orchestration (no external agent endpoint)
+- Internal writer-agent orchestration (no external agent endpoint)
 - 120-second job timeout support
 
 ## Quickstart
@@ -70,7 +70,8 @@ curl http://localhost:8000/api/v1/generate/<job_id>
 
 ## Internal Agent Contract (Current Assumption)
 
-The orchestrator invokes an internal function with:
+The orchestrator invokes `get_writer_agent()` and runs the returned agent with
+prompt data derived from:
 
 ```json
 {
@@ -84,7 +85,7 @@ The orchestrator invokes an internal function with:
 }
 ```
 
-Expected internal function success response:
+Expected normalized success payload after agent invocation:
 
 ```json
 {

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     gemini_primary_model: str = "gemini-3"
     gemini_fallback_model: str = "gemini-2.0-flash"
+    google_api_key: str | None = None
 
     gcp_project_id: str | None = None
     gcp_location: str = "us-central1"

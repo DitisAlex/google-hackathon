@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from src.models.schemas import ErrorBody, GenerateOptions, JobRecord, JobResult, JobStatus
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class JobStore:
@@ -49,10 +52,12 @@ class JobStore:
         )
         self._jobs[job_id] = record
         self._save_snapshot()
+        logger.info("job_created", job_id=job_id, github_url=github_url)
         return record
 
     def get_job(self, job_id: str) -> Optional[JobRecord]:
         """Return a job by ID if it exists."""
+        logger.debug("job_lookup", job_id=job_id, found=job_id in self._jobs)
         return self._jobs.get(job_id)
 
     def set_processing(self, job_id: str) -> None:
@@ -61,6 +66,7 @@ class JobStore:
         record.status = JobStatus.processing
         record.updated_at = datetime.now(timezone.utc)
         self._save_snapshot()
+        logger.info("job_marked_processing", job_id=job_id)
 
     def set_completed(self, job_id: str, result: JobResult) -> None:
         """Store successful result and mark the job as completed."""
@@ -69,6 +75,7 @@ class JobStore:
         record.result = result
         record.updated_at = datetime.now(timezone.utc)
         self._save_snapshot()
+        logger.info("job_marked_completed", job_id=job_id)
 
     def set_failed(self, job_id: str, code: str, message: str, details: Optional[dict] = None) -> None:
         """Store failure details and mark the job as failed.
@@ -84,11 +91,13 @@ class JobStore:
         record.error = ErrorBody(code=code, message=message, details=details or {})
         record.updated_at = datetime.now(timezone.utc)
         self._save_snapshot()
+        logger.warning("job_marked_failed", job_id=job_id, code=code)
 
     def _save_snapshot(self) -> None:
         """Write all current jobs to disk as JSON."""
         payload = {job_id: record.model_dump(mode="json") for job_id, record in self._jobs.items()}
         self._snapshot_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        logger.debug("job_snapshot_saved", path=str(self._snapshot_path), jobs=len(self._jobs))
 
     def _load_snapshot(self) -> None:
         """Restore jobs from snapshot if available and valid.
@@ -106,5 +115,7 @@ class JobStore:
                 return
             data = json.loads(raw)
             self._jobs = {job_id: JobRecord.model_validate(value) for job_id, value in data.items()}
+            logger.info("job_snapshot_loaded", path=str(self._snapshot_path), jobs=len(self._jobs))
         except (json.JSONDecodeError, OSError):
             self._jobs = {}
+            logger.warning("job_snapshot_load_failed", path=str(self._snapshot_path))

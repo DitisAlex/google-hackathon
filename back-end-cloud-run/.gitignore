@@ -191,6 +191,9 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# Runtime job snapshots
+.jobs_snapshot.json
+
 # PyPI configuration file
 .pypirc
 

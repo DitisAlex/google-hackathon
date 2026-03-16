@@ -4,13 +4,15 @@ import Header from '../components/Header';
 import ReadmePreview from '../components/ReadmePreview';
 import ReadmeSidebar from '../components/ReadmeSidebar';
 import FeedbackForm from '../components/FeedbackForm';
-import { summarizeRepo } from '../services/api';
+import { generateReadme, pollJobStatus } from '../services/api';
 import { extractHeadings } from '../utils/headings';
+import { useAuth } from '../context/AuthContext';
 
 export default function ResultPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const repoUrl = location.state?.repoUrl;
+  const { token, loading: authLoading } = useAuth();
 
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [result, setResult] = useState(null);
@@ -22,6 +24,7 @@ export default function ResultPage() {
       navigate('/', { replace: true });
       return;
     }
+    if (authLoading) return;
 
     let cancelled = false;
     setStatus('loading');
@@ -29,11 +32,34 @@ export default function ResultPage() {
 
     async function fetchSummary() {
       try {
-        const data = await summarizeRepo(repoUrl);
-        if (!cancelled) {
-          setResult(data);
-          setStatus('success');
+        const accepted = await generateReadme({ repoUrl, token });
+
+        // If mock mode returned full result directly (no job_id), use it
+        if (!accepted.job_id) {
+          if (!cancelled) {
+            setResult(accepted);
+            setStatus('success');
+          }
+          return;
         }
+
+        // Poll until the async job completes
+        const job = await pollJobStatus(accepted.job_id);
+        if (cancelled) return;
+
+        if (job.status === 'failed') {
+          setErrorMsg(job.error?.message || 'Generation failed.');
+          setStatus('error');
+          return;
+        }
+
+        setResult({
+          repoName: repoUrl.split('/').filter(Boolean).slice(-1)[0],
+          readme: job.result?.markdown || '',
+          techStack: job.result?.metadata?.tech_stack || [],
+          ...job.result,
+        });
+        setStatus('success');
       } catch (err) {
         if (!cancelled) {
           setErrorMsg(err.message || 'Something went wrong. Please try again.');
@@ -44,7 +70,7 @@ export default function ResultPage() {
 
     fetchSummary();
     return () => { cancelled = true; };
-  }, [repoUrl, navigate, refreshKey]);
+  }, [repoUrl, navigate, refreshKey, token, authLoading]);
 
   const headings = useMemo(
     () => (result?.readme ? extractHeadings(result.readme) : []),
@@ -55,7 +81,6 @@ export default function ResultPage() {
 
   function handleHeadingClick(id) {
     setReadmeView('preview');
-    // Give React one tick to render the preview before scrolling
     setTimeout(() => {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
@@ -158,4 +183,3 @@ export default function ResultPage() {
     </div>
   );
 }
-

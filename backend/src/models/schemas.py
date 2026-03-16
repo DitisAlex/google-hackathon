@@ -19,7 +19,6 @@ class GenerateOptions(BaseModel):
 
 class GenerateRequest(BaseModel):
     github_url: str
-    options: GenerateOptions = Field(default_factory=GenerateOptions)
 
 
 class JobStatus(str, Enum):

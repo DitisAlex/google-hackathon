@@ -1,14 +1,19 @@
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 from src.adk.agents.researcher import build_research_report
 from src.adk.agents.technical_writer import build_markdown
-from src.adk.tools.github_tool import GithubTool
 from src.models.schemas import GenerateOptions, JobResult
 
 
+class GitHubToolProtocol(Protocol):
+    async def fetch_tree(self, repo_url: str, branch: Optional[str] = None, max_depth: int = 5) -> List[Dict[str, Any]]: ...
+    async def read_file(self, repo_url: str, file_path: str, branch: Optional[str] = None) -> Optional[str]: ...
+    async def check_repo_accessibility(self, repo_url: str) -> Tuple[bool, int]: ...
+
+
 class DocumentationOrchestrator:
-    def __init__(self, github_tool: GithubTool, timeout_seconds: int) -> None:
+    def __init__(self, github_tool: GitHubToolProtocol, timeout_seconds: int) -> None:
         self._github_tool = github_tool
         self._timeout_seconds = timeout_seconds
 

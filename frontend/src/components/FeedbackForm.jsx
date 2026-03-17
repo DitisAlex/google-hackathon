@@ -7,8 +7,7 @@ export default function FeedbackForm({ repoUrl }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    // TODO: wire up to backend POST /api/feedback
-    console.log('Feedback submitted', { repoUrl, rating, comment });
+    // TODO: wire up to POST /api/v1/feedback
     setSubmitted(true);
   }
 

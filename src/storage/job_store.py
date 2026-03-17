@@ -1,7 +1,6 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Optional
 
 from src.models.schemas import ErrorBody, GenerateOptions, JobRecord, JobResult, JobStatus
 
@@ -9,11 +8,11 @@ from src.models.schemas import ErrorBody, GenerateOptions, JobRecord, JobResult,
 class JobStore:
     def __init__(self, snapshot_path: str = ".jobs_snapshot.json") -> None:
         self._snapshot_path = Path(snapshot_path)
-        self._jobs: Dict[str, JobRecord] = {}
+        self._jobs: dict[str, JobRecord] = {}
         self._load_snapshot()
 
     def create_job(self, job_id: str, github_url: str, options: GenerateOptions) -> JobRecord:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         record = JobRecord(
             job_id=job_id,
             status=JobStatus.queued,
@@ -26,33 +25,33 @@ class JobStore:
         self._save_snapshot()
         return record
 
-    def get_job(self, job_id: str) -> Optional[JobRecord]:
+    def get_job(self, job_id: str) -> JobRecord | None:
         return self._jobs.get(job_id)
 
     def set_processing(self, job_id: str) -> None:
         record = self._jobs[job_id]
         record.status = JobStatus.processing
-        record.updated_at = datetime.now(timezone.utc)
+        record.updated_at = datetime.now(UTC)
         self._save_snapshot()
 
     def set_researcher_output(self, job_id: str, output: dict) -> None:
         record = self._jobs[job_id]
         record.researcher_output = output
-        record.updated_at = datetime.now(timezone.utc)
+        record.updated_at = datetime.now(UTC)
         self._save_snapshot()
 
     def set_completed(self, job_id: str, result: JobResult) -> None:
         record = self._jobs[job_id]
         record.status = JobStatus.completed
         record.result = result
-        record.updated_at = datetime.now(timezone.utc)
+        record.updated_at = datetime.now(UTC)
         self._save_snapshot()
 
-    def set_failed(self, job_id: str, code: str, message: str, details: Optional[dict] = None) -> None:
+    def set_failed(self, job_id: str, code: str, message: str, details: dict | None = None) -> None:
         record = self._jobs[job_id]
         record.status = JobStatus.failed
         record.error = ErrorBody(code=code, message=message, details=details or {})
-        record.updated_at = datetime.now(timezone.utc)
+        record.updated_at = datetime.now(UTC)
         self._save_snapshot()
 
     def _save_snapshot(self) -> None:

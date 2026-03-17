@@ -42,13 +42,7 @@ app.state.settings = settings
 app.state.job_store = JobStore()
 
 
-async def run_generation(job_id: str, github_url: str, options: GenerateOptions, github_token: str | None = None) -> None:
-    github_tool = GithubTool(
-        token=github_token,
-        timeout_seconds=settings.github_api_timeout_seconds,
-        retry_attempts=settings.github_retry_attempts,
-        max_file_size_bytes=settings.max_file_size_bytes,
-    )
+async def run_generation(job_id: str, github_tool: GithubTool, github_url: str, options: GenerateOptions) -> None:
     orchestrator = DocumentationOrchestrator(
         github_tool=github_tool,
         timeout_seconds=settings.max_job_timeout_seconds,

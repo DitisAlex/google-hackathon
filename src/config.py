@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import List
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,18 +29,17 @@ class Settings(BaseSettings):
 
     google_api_key: str | None = None
     gemini_primary_model: str = "gemini-2.5-flash"
-    gemini_fallback_model: str = "gemini-2.5-flash"
 
     gcp_project_id: str | None = None
     gcp_location: str = "us-central1"
     enable_cloud_trace: bool = False
-    cors_allow_origins: List[str] = ["*"]
+    cors_allow_origins: list[str] = ["*"]
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @field_validator("cors_allow_origins", mode="before")
     @classmethod
-    def parse_origins(cls, value: str | List[str]) -> List[str]:
+    def parse_origins(cls, value: str | list[str]) -> list[str]:
         if isinstance(value, list):
             return value
         if not value:

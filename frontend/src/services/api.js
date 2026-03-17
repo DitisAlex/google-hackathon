@@ -190,6 +190,25 @@ function mockResponse(repoUrl) {
  *   readme: string,
  * }>}
  */
+async function apiFetch(url, options) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    let message = `Server error: ${response.status}`;
+    try {
+      const body = await response.json();
+      if (body?.error?.message) message = body.error.message;
+      else if (body?.detail || body?.message) message = body.detail ?? body.message;
+    } catch {
+      // not JSON — keep the status-based message
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 300_000; // 5 minutes
+
 export async function summarizeRepo(repoUrl) {
   if (USE_MOCK) {
     // Simulate network latency so the loading spinner is visible
@@ -197,24 +216,32 @@ export async function summarizeRepo(repoUrl) {
     return mockResponse(repoUrl);
   }
 
-  const response = await fetch(`${API_BASE}/api/summarize`, {
+  // Step 1: submit the job
+  const { job_id } = await apiFetch(`${API_BASE}/api/v1/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repoUrl }),
+    body: JSON.stringify({ github_url: repoUrl }),
   });
 
-  if (!response.ok) {
-    let message = `Server error: ${response.status}`;
-    try {
-      const body = await response.json();
-      if (body?.detail || body?.message) {
-        message = body.detail ?? body.message;
-      }
-    } catch {
-      // not JSON — keep the status-based message
+  // Step 2: poll until completed or failed
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    const job = await apiFetch(`${API_BASE}/api/v1/generate/${job_id}`);
+
+    if (job.status === 'completed') {
+      const repoName = repoUrl.split('/').filter(Boolean).slice(-1)[0] ?? 'repo';
+      return {
+        repoName,
+        readme: job.result?.markdown ?? '',
+      };
     }
-    throw new Error(message);
+
+    if (job.status === 'failed') {
+      throw new Error(job.error?.message ?? 'Generation failed');
+    }
+    // status is 'queued' or 'processing' — keep polling
   }
 
-  return response.json();
+  throw new Error('Request timed out. Please try again.');
 }

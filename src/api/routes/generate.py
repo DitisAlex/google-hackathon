@@ -3,6 +3,8 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Request
 
+from src.adk.tools.github_tool import GithubTool
+from src.api.auth import get_current_user_optional
 from src.api.errors import ApiError
 from src.models.schemas import GenerateAcceptedResponse, GenerateRequest, JobStatusResponse
 
@@ -19,7 +21,17 @@ async def generate_docs(
     if not GITHUB_URL_PATTERN.match(payload.github_url):
         raise ApiError(status_code=400, code="INVALID_URL", message="Invalid GitHub repository URL")
 
-    github_tool = request.app.state.github_tool
+    user = await get_current_user_optional(request)
+    github_token = user["github_token"] if user else None
+
+    settings = request.app.state.settings
+    github_tool = GithubTool(
+        token=github_token,
+        timeout_seconds=settings.github_api_timeout_seconds,
+        retry_attempts=settings.github_retry_attempts,
+        max_file_size_bytes=settings.max_file_size_bytes,
+    )
+
     is_accessible, status_code = await github_tool.check_repo_accessibility(payload.github_url)
     if not is_accessible and status_code == 404:
         raise ApiError(status_code=404, code="REPO_NOT_FOUND", message="Repository not found")
@@ -36,6 +48,7 @@ async def generate_docs(
         job_id,
         payload.github_url,
         payload.options,
+        github_token,
     )
 
     return GenerateAcceptedResponse(job_id=record.job_id, status=record.status, created_at=record.created_at)

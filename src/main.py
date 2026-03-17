@@ -9,6 +9,7 @@ from slowapi.util import get_remote_address
 from src.adk.orchestrator import DocumentationOrchestrator
 from src.adk.tools.github_tool import GithubTool
 from src.api.errors import ApiError
+from src.api.routes.auth import router as auth_router
 from src.api.routes.generate import router as generate_router
 from src.api.routes.health import router as health_router
 from src.config import get_settings
@@ -37,25 +38,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.state.settings = settings
 app.state.job_store = JobStore()
-app.state.github_tool = GithubTool(
-    token=settings.github_token,
-    timeout_seconds=settings.github_api_timeout_seconds,
-    retry_attempts=settings.github_retry_attempts,
-    max_file_size_bytes=settings.max_file_size_bytes,
-)
-app.state.orchestrator = DocumentationOrchestrator(
-    github_tool=app.state.github_tool,
-    timeout_seconds=settings.max_job_timeout_seconds,
-    model=settings.gemini_primary_model,
-    api_key=settings.google_api_key,
-)
 
 
-async def run_generation(job_id: str, github_url: str, options: GenerateOptions) -> None:
+async def run_generation(job_id: str, github_url: str, options: GenerateOptions, github_token: str | None = None) -> None:
+    github_tool = GithubTool(
+        token=github_token,
+        timeout_seconds=settings.github_api_timeout_seconds,
+        retry_attempts=settings.github_retry_attempts,
+        max_file_size_bytes=settings.max_file_size_bytes,
+    )
+    orchestrator = DocumentationOrchestrator(
+        github_tool=github_tool,
+        timeout_seconds=settings.max_job_timeout_seconds,
+        model=settings.gemini_primary_model,
+        api_key=settings.google_api_key,
+    )
     try:
         app.state.job_store.set_processing(job_id)
-        research, result = await app.state.orchestrator.run(github_url, options)
+        research, result = await orchestrator.run(github_url, options)
         app.state.job_store.set_researcher_output(job_id, research)
         app.state.job_store.set_completed(job_id, result)
         logger.info("job_completed", job_id=job_id)
@@ -89,4 +91,5 @@ async def api_error_handler(_: Request, exc: ApiError):
 
 
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(generate_router)

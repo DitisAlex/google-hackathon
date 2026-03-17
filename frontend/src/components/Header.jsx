@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const navigate = useNavigate();
+  const { user, loading, logout } = useAuth();
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -9,7 +12,6 @@ export default function Header() {
           onClick={() => navigate('/')}
           className="flex items-center gap-2 hover:opacity-80 transition"
         >
-          {/* GitHub-style octocat icon as SVG */}
           <svg className="w-7 h-7 text-brand-600" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57
               0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695
@@ -22,7 +24,29 @@ export default function Header() {
           </svg>
           <span className="text-xl font-bold text-gray-900 tracking-tight">ReadmeAI</span>
         </button>
-        <span className="text-sm text-gray-500">GitHub README Generator</span>
+
+        <div className="flex items-center gap-3">
+          {loading ? (
+            <span className="text-sm text-gray-400">...</span>
+          ) : user ? (
+            <>
+              <img
+                src={user.avatar_url}
+                alt={user.login}
+                className="w-8 h-8 rounded-full border border-gray-200"
+              />
+              <span className="text-sm font-medium text-gray-700">{user.login}</span>
+              <button
+                onClick={logout}
+                className="text-sm text-gray-500 hover:text-gray-700 transition"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <span className="text-sm text-gray-500">GitHub README Generator</span>
+          )}
+        </div>
       </div>
     </header>
   );

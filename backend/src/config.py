@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from functools import lru_cache
 from typing import List
 
@@ -24,29 +22,26 @@ class Settings(BaseSettings):
     github_token: str | None = None
     github_client_id: str = ""
     github_client_secret: str = ""
+    github_mcp_image: str = "ghcr.io/github/github-mcp-server"
 
     jwt_secret_key: str = "change-me-in-production"
-    jwt_expire_minutes: int = 60
+    jwt_expire_minutes: int = 480
 
-    google_api_key: str | None = None
-    gemini_primary_model: str = "gemini-2.5-flash"
-    gemini_fallback_model: str = "gemini-2.5-flash"
+    gemini_primary_model: str = "gemini-3"
+    gemini_fallback_model: str = "gemini-2.0-flash"
 
     gcp_project_id: str | None = None
     gcp_location: str = "us-central1"
     enable_cloud_trace: bool = False
-    cors_allow_origins: List[str] = ["*"]
+    cors_allow_origins: str = "*"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    @field_validator("cors_allow_origins", mode="before")
-    @classmethod
-    def parse_origins(cls, value: str | List[str]) -> List[str]:
-        if isinstance(value, list):
-            return value
-        if not value:
+    @property
+    def cors_origins_list(self) -> List[str]:
+        if not self.cors_allow_origins:
             return ["*"]
-        return [part.strip() for part in value.split(",") if part.strip()]
+        return [part.strip() for part in self.cors_allow_origins.split(",") if part.strip()]
 
 
 @lru_cache

@@ -1,6 +1,54 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
 // ---------------------------------------------------------------------------
+// Auth API
+// ---------------------------------------------------------------------------
+
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID ?? '';
+
+export function getGitHubLoginUrl() {
+  if (!GITHUB_CLIENT_ID) {
+    throw new Error('GitHub OAuth is not configured. Set VITE_GITHUB_CLIENT_ID in .env');
+  }
+  const state = crypto.randomUUID();
+  const authorize_url =
+    `https://github.com/login/oauth/authorize` +
+    `?client_id=${encodeURIComponent(GITHUB_CLIENT_ID)}` +
+    `&scope=repo` +
+    `&state=${encodeURIComponent(state)}`;
+  return { authorize_url, state };
+}
+
+export async function exchangeGitHubCode(code, state) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/github/callback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, state }),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body?.message || 'Failed to complete GitHub sign-in');
+  }
+  return response.json();
+}
+
+export async function getMe(token) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Not authenticated');
+  return response.json();
+}
+
+export async function getUserRepos(token) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/repos?per_page=50`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Failed to fetch repositories');
+  return response.json();
+}
+
+// ---------------------------------------------------------------------------
 // Mock — set VITE_USE_MOCK=true in .env to skip the real backend
 // ---------------------------------------------------------------------------
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
@@ -178,70 +226,81 @@ function mockResponse(repoUrl) {
 // ---------------------------------------------------------------------------
 
 /**
- * Ask the backend to summarize a GitHub repository and generate a README.
+ * Ask the backend to generate a README for a GitHub repository.
  *
- * @param {string} repoUrl - Full GitHub repository URL
- * @returns {Promise<{
- *   repoName: string,
- *   summary: string,
- *   techStack: string[],
- *   setupSteps: string[],
- *   usageExamples: string,
- *   readme: string,
- * }>}
+ * @param {object} params
+ * @param {string} params.repoUrl  - Full GitHub repository URL
+ * @param {string|null} params.token - JWT auth token (null if not signed in)
+ * @returns {Promise<{ job_id: string, status: string, created_at: string }>}
  */
-async function apiFetch(url, options) {
-  const response = await fetch(url, options);
+export async function generateReadme({ repoUrl, token = null }) {
+  const body = { github_url: repoUrl };
+
+  console.log('========== generateReadme called ==========');
+  console.log(JSON.stringify(body, null, 2));
+  console.log('Token:', token ? 'present' : 'null');
+  console.log('============================================');
+
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+    return mockResponse(repoUrl);
+  }
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}/api/v1/generate`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
   if (!response.ok) {
     let message = `Server error: ${response.status}`;
     try {
-      const body = await response.json();
-      if (body?.error?.message) message = body.error.message;
-      else if (body?.detail || body?.message) message = body.detail ?? body.message;
+      const errBody = await response.json();
+      if (errBody?.detail || errBody?.message) {
+        message = errBody.detail ?? errBody.message;
+      }
     } catch {
       // not JSON — keep the status-based message
     }
     throw new Error(message);
   }
+
   return response.json();
 }
 
-const POLL_INTERVAL_MS = 2000;
-const POLL_TIMEOUT_MS = 300_000; // 5 minutes
+/**
+ * Poll a generation job until it completes or fails.
+ *
+ * @param {string} jobId - The job ID from generateReadme
+ * @param {object} [opts]
+ * @param {number} [opts.interval=2000] - Polling interval in ms
+ * @param {number} [opts.timeout=300000] - Max wait time in ms
+ * @returns {Promise<{ status: string, result: object|null, error: object|null }>}
+ */
+export async function pollJobStatus(jobId, { interval = 2000, timeout = 300_000 } = {}) {
+  const deadline = Date.now() + timeout;
 
-export async function summarizeRepo(repoUrl) {
-  if (USE_MOCK) {
-    // Simulate network latency so the loading spinner is visible
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-    return mockResponse(repoUrl);
-  }
-
-  // Step 1: submit the job
-  const { job_id } = await apiFetch(`${API_BASE}/api/v1/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ github_url: repoUrl }),
-  });
-
-  // Step 2: poll until completed or failed
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    const job = await apiFetch(`${API_BASE}/api/v1/generate/${job_id}`);
+    const response = await fetch(`${API_BASE}/api/v1/generate/${jobId}`);
+    if (!response.ok) throw new Error(`Failed to check job status: ${response.status}`);
 
-    if (job.status === 'completed') {
-      const repoName = repoUrl.split('/').filter(Boolean).slice(-1)[0] ?? 'repo';
-      return {
-        repoName,
-        readme: job.result?.markdown ?? '',
-      };
+    const data = await response.json();
+    if (data.status === 'completed' || data.status === 'failed') {
+      return data;
     }
 
-    if (job.status === 'failed') {
-      throw new Error(job.error?.message ?? 'Generation failed');
-    }
-    // status is 'queued' or 'processing' — keep polling
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
   throw new Error('Request timed out. Please try again.');
+}
+
+// Keep the old function name working for backward compat with mock mode
+export async function summarizeRepo(repoUrl, token = null) {
+  return generateReadme({ repoUrl, token });
 }

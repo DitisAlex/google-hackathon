@@ -7,7 +7,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from src.adk.orchestrator import DocumentationOrchestrator
-from src.adk.tools.github_tool import GithubTool
+from src.adk.tools.mcp_github_tool import MCPGithubTool
 from src.api.errors import ApiError
 from src.api.routes.auth import router as auth_router
 from src.api.routes.generate import router as generate_router
@@ -32,30 +32,34 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_allow_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.state.settings = settings
 app.state.job_store = JobStore()
+app.state.github_tool = MCPGithubTool(
+    token=settings.github_token,
+    mcp_image=settings.github_mcp_image,
+    max_file_size_bytes=settings.max_file_size_bytes,
+)
 
 
-async def run_generation(job_id: str, github_url: str, options: GenerateOptions, github_token: str | None = None) -> None:
-    github_tool = GithubTool(
-        token=github_token,
-        timeout_seconds=settings.github_api_timeout_seconds,
-        retry_attempts=settings.github_retry_attempts,
-        max_file_size_bytes=settings.max_file_size_bytes,
-    )
-    orchestrator = DocumentationOrchestrator(
-        github_tool=github_tool,
-        timeout_seconds=settings.max_job_timeout_seconds,
-        model=settings.gemini_primary_model,
-        api_key=settings.google_api_key,
-    )
+async def run_generation(
+    job_id: str,
+    github_url: str,
+    options: GenerateOptions,
+    github_token: str | None = None,
+) -> None:
     try:
+        github_tool = app.state.github_tool
+        if github_token:
+            github_tool = github_tool.with_token(github_token)
+        orchestrator = DocumentationOrchestrator(
+            github_tool=github_tool,
+            timeout_seconds=settings.max_job_timeout_seconds,
+        )
         app.state.job_store.set_processing(job_id)
         research, result = await orchestrator.run(github_url, options)
         app.state.job_store.set_researcher_output(job_id, research)
@@ -73,7 +77,7 @@ app.state.run_generation = run_generation
 
 
 @app.middleware("http")
-async def enforce_body_size_limit(request: Request, call_next) -> JSONResponse:
+async def enforce_body_size_limit(request: Request, call_next):
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > settings.max_request_body_bytes:
         raise ApiError(
@@ -91,5 +95,5 @@ async def api_error_handler(_: Request, exc: ApiError):
 
 
 app.include_router(health_router)
-app.include_router(auth_router)
 app.include_router(generate_router)
+app.include_router(auth_router)

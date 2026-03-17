@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -9,6 +11,7 @@ from slowapi.util import get_remote_address
 from src.adk.orchestrator import DocumentationOrchestrator
 from src.adk.tools.github_tool import GithubTool
 from src.api.errors import ApiError
+from src.api.routes.auth import router as auth_router
 from src.api.routes.generate import router as generate_router
 from src.api.routes.health import router as health_router
 from src.config import get_settings
@@ -37,23 +40,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.state.settings = settings
 app.state.job_store = JobStore()
-app.state.github_tool = GithubTool(
-    token=settings.github_token,
-    timeout_seconds=settings.github_api_timeout_seconds,
-    retry_attempts=settings.github_retry_attempts,
-    max_file_size_bytes=settings.max_file_size_bytes,
-)
-app.state.orchestrator = DocumentationOrchestrator(
-    github_tool=app.state.github_tool,
-    timeout_seconds=settings.max_job_timeout_seconds,
-)
 
 
-async def run_generation(job_id: str, github_url: str, options: GenerateOptions) -> None:
+async def run_generation(job_id: str, github_tool: GithubTool, github_url: str, options: GenerateOptions) -> None:
+    orchestrator = DocumentationOrchestrator(
+        github_tool=github_tool,
+        timeout_seconds=settings.max_job_timeout_seconds,
+        model=settings.gemini_primary_model,
+        api_key=settings.google_api_key,
+    )
     try:
         app.state.job_store.set_processing(job_id)
-        research, result = await app.state.orchestrator.run(github_url, options)
+        research, result = await orchestrator.run(github_url, options)
         app.state.job_store.set_researcher_output(job_id, research)
         app.state.job_store.set_completed(job_id, result)
         logger.info("job_completed", job_id=job_id)
@@ -69,7 +69,7 @@ app.state.run_generation = run_generation
 
 
 @app.middleware("http")
-async def enforce_body_size_limit(request: Request, call_next):
+async def enforce_body_size_limit(request: Request, call_next) -> JSONResponse:
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > settings.max_request_body_bytes:
         raise ApiError(
@@ -87,4 +87,18 @@ async def api_error_handler(_: Request, exc: ApiError):
 
 
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(generate_router)
+
+# Mount static files for the frontend
+if os.path.exists("frontend/dist"):
+    app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Serve actual files if they exist
+        file_path = os.path.join("frontend/dist", full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # Otherwise, serve index.html for SPA routing
+        return FileResponse("frontend/dist/index.html")

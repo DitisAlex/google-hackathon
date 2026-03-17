@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +11,7 @@ class OutputFormat(str, Enum):
 
 
 class GenerateOptions(BaseModel):
-    branch: Optional[str] = None
+    branch: str | None = None
     max_depth: int = Field(default=5, ge=1, le=12)
     include_tests: bool = False
     output_format: OutputFormat = OutputFormat.markdown
@@ -30,15 +30,15 @@ class JobStatus(str, Enum):
 
 
 class JobResult(BaseModel):
-    markdown: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    json: Optional[Dict[str, Any]] = None
+    markdown: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    json_output: dict[str, Any] | None = None
 
 
 class ErrorBody(BaseModel):
     code: str
     message: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class ErrorResponse(BaseModel):
@@ -50,11 +50,11 @@ class JobRecord(BaseModel):
     status: JobStatus
     github_url: str
     options: GenerateOptions
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    result: Optional[JobResult] = None
-    error: Optional[ErrorBody] = None
-    researcher_output: Optional[Dict[str, Any]] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    result: JobResult | None = None
+    error: ErrorBody | None = None
+    researcher_output: dict[str, Any] | None = None
 
 
 class GenerateAcceptedResponse(BaseModel):
@@ -66,6 +66,6 @@ class GenerateAcceptedResponse(BaseModel):
 class JobStatusResponse(BaseModel):
     job_id: str
     status: JobStatus
-    result: Optional[JobResult] = None
-    error: Optional[ErrorBody] = None
+    result: JobResult | None = None
+    error: ErrorBody | None = None
     created_at: datetime

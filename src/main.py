@@ -48,6 +48,7 @@ app.state.orchestrator = DocumentationOrchestrator(
     github_tool=app.state.github_tool,
     timeout_seconds=settings.max_job_timeout_seconds,
     model=settings.gemini_primary_model,
+    api_key=settings.google_api_key,
 )
 
 

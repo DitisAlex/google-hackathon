@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import uuid
 
 from google.adk.agents import SequentialAgent
@@ -14,10 +15,12 @@ from src.models.schemas import GenerateOptions, JobResult
 
 
 class DocumentationOrchestrator:
-    def __init__(self, github_tool: GithubTool, timeout_seconds: int, model: str = "gemini-2.0-flash") -> None:
+    def __init__(self, github_tool: GithubTool, timeout_seconds: int, model: str = "gemini-2.0-flash", api_key: str | None = None) -> None:
         self._github_tool = github_tool
         self._timeout_seconds = timeout_seconds
         self._model = model
+        if api_key:
+            os.environ.setdefault("GOOGLE_API_KEY", api_key)
 
     async def run(self, github_url: str, options: GenerateOptions) -> tuple[dict, JobResult]:
         tools = create_github_tools(self._github_tool)

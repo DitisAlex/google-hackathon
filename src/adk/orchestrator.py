@@ -29,17 +29,12 @@ class DocumentationOrchestrator:
         pipeline = SequentialAgent(
             name="readme_pipeline",
             sub_agents=[
-<<<<<<< feature/analyzing-writing-skills
                 create_researcher_agent(
                     [*github_tools, build_analyzing_skill_toolset()], model=self._model),
+                create_diagrammer_agent(model=self._model),
                 create_writer_agent(
                     [build_writing_skill_toolset()],
                     model=self._model),
-=======
-                create_researcher_agent(tools, model=self._model),
-                create_diagrammer_agent(model=self._model),
-                create_writer_agent(model=self._model),
->>>>>>> feature/google-adk-migration
             ],
         )
 

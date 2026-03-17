@@ -31,6 +31,7 @@ class JobStatus(str, Enum):
 
 class JobResult(BaseModel):
     markdown: str | None = None
+    mermaid_diagram: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     json_output: dict[str, Any] | None = None
 

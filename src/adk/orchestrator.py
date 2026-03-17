@@ -8,8 +8,10 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai.types import Content, Part
 
+from src.adk.agents.diagrammer import create_diagrammer_agent
 from src.adk.agents.researcher import create_researcher_agent
 from src.adk.agents.technical_writer import create_writer_agent
+from src.adk.agents.skills.skill_builder import build_analyzing_skill_toolset, build_writing_skill_toolset
 from src.adk.tools.github_tool import GithubTool, create_github_tools
 from src.models.schemas import GenerateOptions, JobResult
 
@@ -23,12 +25,16 @@ class DocumentationOrchestrator:
             os.environ.setdefault("GOOGLE_API_KEY", api_key)
 
     async def run(self, github_url: str, options: GenerateOptions) -> tuple[dict, JobResult]:
-        tools = create_github_tools(self._github_tool)
+        github_tools = create_github_tools(self._github_tool)
         pipeline = SequentialAgent(
             name="readme_pipeline",
             sub_agents=[
-                create_researcher_agent(tools, model=self._model),
-                create_writer_agent(model=self._model),
+                create_researcher_agent(
+                    [*github_tools, build_analyzing_skill_toolset()], model=self._model),
+                create_diagrammer_agent(model=self._model),
+                create_writer_agent(
+                    [build_writing_skill_toolset()],
+                    model=self._model),
             ],
         )
 
@@ -58,6 +64,7 @@ class DocumentationOrchestrator:
         state = await asyncio.wait_for(_run(), timeout=self._timeout_seconds)
 
         markdown = state.get("readme_markdown", "")
+        mermaid_diagram = state.get("mermaid_diagram", "")
         research = state.get("research_output", {})
         if isinstance(research, str):
             try:
@@ -67,6 +74,7 @@ class DocumentationOrchestrator:
 
         result = JobResult(
             markdown=markdown,
+            mermaid_diagram=mermaid_diagram if mermaid_diagram else None,
             metadata={
                 "tech_stack": research.get("tech_stack", []),
                 "file_count": len(research.get("directory_summary", {})),

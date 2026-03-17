@@ -127,12 +127,12 @@ class GithubTool:
 
 
 def create_github_tools(github_tool: GithubTool) -> list:
-    async def fetch_tree(repo_url: str, branch: str = "", max_depth: int = 5):
-        """Fetch the file tree of a GitHub repository. Returns a list of {path, type, size} dicts. Leave branch empty to use the default branch."""
-        return await github_tool.fetch_tree(repo_url, branch or None, max_depth)
+    async def fetch_tree(repo_url: str, branch: str, max_depth: int):
+        """Fetch the file tree of a GitHub repository. Returns a list of {path, type, size} dicts. Pass an empty string for branch to use the default branch. max_depth controls how deep to recurse (recommended: 5)."""
+        return await github_tool.fetch_tree(repo_url, branch or None, max_depth or 5)
 
-    async def read_file(repo_url: str, file_path: str, branch: str = ""):
-        """Read the text content of a single file in a GitHub repository. Returns None if too large or binary. Leave branch empty to use the default branch."""
+    async def read_file(repo_url: str, file_path: str, branch: str):
+        """Read the text content of a single file in a GitHub repository. Returns None if too large or binary. Pass an empty string for branch to use the default branch."""
         return await github_tool.read_file(repo_url, file_path, branch or None)
 
     return [FunctionTool(fetch_tree), FunctionTool(read_file)]

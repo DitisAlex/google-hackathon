@@ -1,6 +1,6 @@
 # ReadmeAI
 
-https://github.com/user-attachments/assets/stitch-design/WhatsApp%20Video%202026-03-17%20at%2011.14.08.mp4
+<video src="https://github.com/DitisAlex/google-hackathon/raw/main/stitch-design/WhatsApp%20Video%202026-03-17%20at%2011.14.08.mp4" controls width="100%"></video>
 
 > Onboarding into a new internal codebase often means wading through READMEs that are outdated or missing altogether, plus scattered internal documentation, before you can write a single line of code. **ReadmeAI** analyzes public or your internal GitHub repositories to generate clear, detailed, and always up-to-date READMEs tailored for new developers today — and tomorrow can power rich documentation for other internal tools and artifacts, from Jira projects to runbooks and beyond.
 

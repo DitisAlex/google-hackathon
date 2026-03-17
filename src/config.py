@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     github_token: str | None = None
     github_client_id: str = ""
     github_client_secret: str = ""
+    github_mcp_image: str = "ghcr.io/github/github-mcp-server"
 
     jwt_secret_key: str = "change-me-in-production"
     jwt_expire_minutes: int = 60

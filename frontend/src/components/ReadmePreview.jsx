@@ -1,7 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import mermaid from 'mermaid';
 import { slugify } from '../utils/headings';
+
+mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+
+function MermaidBlock({ chart }) {
+  const ref = useRef(null);
+  const uniqueId = useId().replaceAll(':', '_');
+  const [svg, setSvg] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { svg: rendered } = await mermaid.render(`mermaid${uniqueId}`, chart);
+        if (!cancelled) setSvg(rendered);
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to render diagram');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chart, uniqueId]);
+
+  if (error) {
+    return (
+      <pre className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 overflow-x-auto mb-4">
+        {chart}
+      </pre>
+    );
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="my-6 flex justify-center overflow-x-auto"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
 
 function nodeText(node) {
   if (!node) return '';
@@ -44,6 +83,11 @@ const mdComponents = {
   ),
   // Inline code
   code: ({ inline, className, children }) => {
+    // Detect mermaid fenced code blocks
+    if (!inline && /language-mermaid/.test(className || '')) {
+      const chart = String(children).replace(/\n$/, '');
+      return <MermaidBlock chart={chart} />;
+    }
     if (inline) {
       return (
         <code className="bg-gray-100 rounded px-1 py-0.5 text-sm font-mono text-gray-800">{children}</code>
@@ -53,9 +97,15 @@ const mdComponents = {
       <code className={className}>{children}</code>
     );
   },
-  pre: ({ children }) => (
-    <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto mb-4 text-sm font-mono leading-relaxed">{children}</pre>
-  ),
+  pre: ({ children }) => {
+    // If the child is a MermaidBlock, render it directly without the <pre> wrapper
+    if (children?.type === MermaidBlock) {
+      return children;
+    }
+    return (
+      <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 overflow-x-auto mb-4 text-sm font-mono leading-relaxed">{children}</pre>
+    );
+  },
   table: ({ children }) => (
     <div className="overflow-x-auto mb-4">
       <table className="w-full text-sm border-collapse">{children}</table>

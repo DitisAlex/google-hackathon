@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     github_token: str | None = None
 
     google_api_key: str | None = None
-    gemini_primary_model: str = "gemini-2.0-flash"
-    gemini_fallback_model: str = "gemini-2.0-flash"
+    gemini_primary_model: str = "gemini-2.5-flash"
+    gemini_fallback_model: str = "gemini-2.5-flash"
 
     gcp_project_id: str | None = None
     gcp_location: str = "us-central1"

@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 import httpx
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -43,6 +41,15 @@ class MeResponse(BaseModel):
     name: str
 
 
+class RepoItem(BaseModel):
+    full_name: str
+    html_url: str
+    description: str | None = None
+    private: bool = False
+    language: str | None = None
+    updated_at: str
+
+
 @router.get("/github/login")
 async def github_login() -> GitHubLoginResponse:
     settings = get_settings()
@@ -72,17 +79,17 @@ async def github_callback(payload: GitHubCallbackRequest) -> GitHubCallbackRespo
             status_code=400,
             code="TOKEN_EXCHANGE_FAILED",
             message=f"Failed to exchange code for token: {exc}",
-        )
+        ) from exc
 
     try:
         user_info = await fetch_github_user(github_token)
-    except Exception:
+    except Exception as exc:
         logger.exception("github_user_fetch_failed")
         raise ApiError(
             status_code=400,
             code="USER_FETCH_FAILED",
             message="Failed to fetch GitHub user info",
-        )
+        ) from exc
 
     token = create_jwt(github_token, user_info)
     logger.info("user_authenticated", login=user_info["login"])
@@ -90,7 +97,7 @@ async def github_callback(payload: GitHubCallbackRequest) -> GitHubCallbackRespo
 
 
 @router.get("/me")
-async def get_me(user: dict = Depends(get_current_user)) -> MeResponse:
+async def get_me(user: dict = Depends(get_current_user)) -> MeResponse:  # noqa: B008
     return MeResponse(
         login=user["login"],
         avatar_url=user["avatar_url"],
@@ -98,21 +105,12 @@ async def get_me(user: dict = Depends(get_current_user)) -> MeResponse:
     )
 
 
-class RepoItem(BaseModel):
-    full_name: str
-    html_url: str
-    description: Optional[str] = None
-    private: bool = False
-    language: Optional[str] = None
-    updated_at: str
-
-
 @router.get("/repos")
 async def list_user_repos(
-    user: dict = Depends(get_current_user),
-    page: int = Query(default=1, ge=1),
+    user: dict = Depends(get_current_user),  # noqa: B008
+    page: int = Query(default=1, ge=1),  # noqa: B008
     per_page: int = Query(default=30, ge=1, le=100),
-) -> List[RepoItem]:
+) -> list[RepoItem]:
     github_token = user["github_token"]
     async with httpx.AsyncClient() as client:
         response = await client.get(

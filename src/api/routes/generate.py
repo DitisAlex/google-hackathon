@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Request
 
-from src.adk.tools.github_tool import GithubTool
 from src.api.auth import get_current_user_optional
 from src.api.errors import ApiError
 from src.models.schemas import GenerateAcceptedResponse, GenerateRequest, JobStatusResponse
@@ -24,7 +23,10 @@ async def generate_docs(
     user = await get_current_user_optional(request)
     github_token = user["github_token"] if user else None
 
+    # Build a tool instance once — reused by both the accessibility check and the job runner.
     settings = request.app.state.settings
+    from src.adk.tools.github_tool import GithubTool
+
     github_tool = GithubTool(
         token=github_token,
         timeout_seconds=settings.github_api_timeout_seconds,
@@ -46,9 +48,9 @@ async def generate_docs(
     background_tasks.add_task(
         request.app.state.run_generation,
         job_id,
+        github_tool,
         payload.github_url,
         payload.options,
-        github_token,
     )
 
     return GenerateAcceptedResponse(job_id=record.job_id, status=record.status, created_at=record.created_at)

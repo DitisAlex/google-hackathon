@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urlparse
 
 from mcp import ClientSession, StdioServerParameters
@@ -20,7 +20,7 @@ class RepoRef:
 class MCPGithubTool:
     def __init__(
         self,
-        token: Optional[str] = None,
+        token: str | None = None,
         mcp_image: str = "ghcr.io/github/github-mcp-server",
         max_file_size_bytes: int = 102_400,
     ) -> None:
@@ -72,7 +72,7 @@ class MCPGithubTool:
                     return None
                 return result.content
 
-    async def check_repo_accessibility(self, repo_url: str) -> Tuple[bool, int]:
+    async def check_repo_accessibility(self, repo_url: str) -> tuple[bool, int]:
         ref = self.parse_repo_url(repo_url)
         try:
             result = await self._call_tool("get_file_contents", {
@@ -90,11 +90,11 @@ class MCPGithubTool:
     async def fetch_tree(
         self,
         repo_url: str,
-        branch: Optional[str] = None,
+        branch: str | None = None,
         max_depth: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         ref = self.parse_repo_url(repo_url)
-        arguments: Dict[str, Any] = {
+        arguments: dict[str, Any] = {
             "owner": ref.owner,
             "repo": ref.repo,
             "recursive": True,
@@ -106,7 +106,7 @@ class MCPGithubTool:
         if result is None:
             return []
 
-        tree: List[Dict[str, Any]] = []
+        tree: list[dict[str, Any]] = []
         for content_block in result:
             text = content_block.text if hasattr(content_block, "text") else str(content_block)
             try:
@@ -131,10 +131,10 @@ class MCPGithubTool:
         self,
         repo_url: str,
         file_path: str,
-        branch: Optional[str] = None,
-    ) -> Optional[str]:
+        branch: str | None = None,
+    ) -> str | None:
         ref = self.parse_repo_url(repo_url)
-        arguments: Dict[str, Any] = {
+        arguments: dict[str, Any] = {
             "owner": ref.owner,
             "repo": ref.repo,
             "path": file_path,

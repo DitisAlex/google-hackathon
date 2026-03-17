@@ -1,6 +1,5 @@
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import jwt
@@ -11,7 +10,6 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_USER_URL = "https://api.github.com/user"
 
@@ -61,8 +59,8 @@ def create_jwt(github_token: str, user_info: dict) -> str:
         "login": user_info["login"],
         "avatar_url": user_info["avatar_url"],
         "name": user_info["name"],
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes),
-        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(UTC) + timedelta(minutes=settings.jwt_expire_minutes),
+        "iat": datetime.now(UTC),
     }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm="HS256")
 
@@ -84,15 +82,15 @@ async def get_current_user(request: Request) -> dict:
     token = auth_header.removeprefix("Bearer ")
     try:
         return decode_jwt(token)
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as exc:
         from src.api.errors import ApiError
-        raise ApiError(status_code=401, code="TOKEN_EXPIRED", message="Token has expired")
-    except jwt.InvalidTokenError:
+        raise ApiError(status_code=401, code="TOKEN_EXPIRED", message="Token has expired") from exc
+    except jwt.InvalidTokenError as exc:
         from src.api.errors import ApiError
-        raise ApiError(status_code=401, code="INVALID_TOKEN", message="Invalid token")
+        raise ApiError(status_code=401, code="INVALID_TOKEN", message="Invalid token") from exc
 
 
-async def get_current_user_optional(request: Request) -> Optional[dict]:
+async def get_current_user_optional(request: Request) -> dict | None:
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None

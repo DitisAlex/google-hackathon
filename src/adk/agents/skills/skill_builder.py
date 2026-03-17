@@ -45,6 +45,6 @@ def build_analyzing_skill_toolset() -> SkillToolset:
     return SkillToolset(skills=[analyzing_repo_skill])
 
 def build_writing_skill_toolset() -> SkillToolset:
-    writing_md_doc_skill = _load_skill_from_md("writing_md_doc.md")
+    writing_md_doc_skill = _load_skill_from_md("technical_writing.md")
     """Return a SkillToolset containing all agent skills in this package."""
     return SkillToolset(skills=[writing_md_doc_skill])

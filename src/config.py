@@ -22,11 +22,12 @@ class Settings(BaseSettings):
     github_api_timeout_seconds: int = 10
     github_retry_attempts: int = 3
     github_token: str | None = None
-    github_client_id: str = ""
-    github_client_secret: str = ""
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    github_mcp_image: str = "ghcr.io/github/github-mcp-server"
 
     jwt_secret_key: str = "change-me-in-production"
-    jwt_expire_minutes: int = 60
+    jwt_expire_minutes: int = 480
 
     google_api_key: str | None = None
     gemini_primary_model: str = "gemini-2.5-flash"

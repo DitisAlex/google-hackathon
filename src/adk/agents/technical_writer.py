@@ -28,10 +28,11 @@ Rules:
 """
 
 
-def create_writer_agent(model: str = "gemini-2.0-flash") -> LlmAgent:
+def create_writer_agent(tools: list, model: str = "gemini-2.0-flash") -> LlmAgent:
     return LlmAgent(
         name="technical_writer",
         model=model,
         instruction=WRITER_PROMPT,
         output_key="readme_markdown",
+        tools=tools,
     )

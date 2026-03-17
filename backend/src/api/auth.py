@@ -21,7 +21,7 @@ async def exchange_code_for_token(code: str) -> str:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             GITHUB_TOKEN_URL,
-            json={
+            data={
                 "client_id": settings.github_client_id,
                 "client_secret": settings.github_client_secret,
                 "code": code,
